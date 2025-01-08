@@ -3,24 +3,42 @@ import { useNavigate, Link } from "react-router-dom";
 import apiService from "../services/apiService";
 
 const HomePage = () => {
-  const sampleForms = [
-    { _id: "1", title: "Job Application" },
-    { _id: "2", title: "Feedback Form" },
-    { _id: "3", title: "Event Registration" },
-    { _id: "4", title: "Survey Form" },
-    { _id: "5", title: "Contact Us Form" },
-  ];
-
-  const [forms, setForms] = useState(sampleForms);
-  const [error, setError] = useState(null); // Track errors
+  const [forms, setForms] = useState([]);
+  const [deletingId, setDeletingId] = useState(null); 
+  const [loading, setLoading] = useState(false); 
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    setLoading(true); 
     apiService
       .getForms()
-      .then((data) => setForms(data))
-      .catch((err) => setError(err.message)); // Handle errors
+      .then((data) => {
+        setForms(data);
+        setLoading(false); 
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false); 
+      });
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this form?")) {
+      return; // Exit if the user cancels the deletion
+    }
+
+    try {
+      setDeletingId(id); // Disable the delete button for this ID
+      await apiService.deleteFormById(id); // Call API to delete the form
+      setForms(forms.filter((form) => form._id !== id)); // Update state
+      alert("Form deleted successfully form Database");
+    } catch (error) {
+      setError(`Error deleting form: ${error.message}`);
+    } finally {
+      setDeletingId(null); // Re-enable the delete button
+    }
+  };
 
   return (
     <div style={{ textAlign: "center", fontFamily: "Arial, sans-serif" }}>
@@ -42,20 +60,26 @@ const HomePage = () => {
       >
         CREATE NEW FORM
       </button>
-      <div style={{ display: "flex", justifyContent: "center" }}>
+
+      {loading ? (
+        <div style={{ fontSize: "1.5rem", color: "#28a745" }}>
+          Loading forms...
+        </div>
+      ) : (
         <div
           style={{
-            border: "1px solid #ddd",
-            borderRadius: "10px",
-            padding: "20px",
-            width: "300px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
           }}
         >
-          <h2>Forms</h2>
           {forms.length === 0 ? (
             <p
-              style={{ color: "#999", fontStyle: "italic", fontSize: "1.2rem" }}
+              style={{
+                color: "#999",
+                fontStyle: "italic",
+                fontSize: "1.2rem",
+              }}
             >
               No forms available. Create a new one!
             </p>
@@ -71,11 +95,11 @@ const HomePage = () => {
                   borderRadius: "10px",
                   padding: "20px",
                   marginBottom: "15px",
-                  width: "90%",
-                  maxWidth: "500px",
+                  width: "calc(25% - 30px)", // 4 forms per row on large screens
+                  maxWidth: "300px",
                   backgroundColor: "#fff",
                   boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                  margin: "auto",
+                  margin: "15px",
                 }}
               >
                 <h3
@@ -92,14 +116,13 @@ const HomePage = () => {
                   style={{ display: "flex", gap: "15px", marginTop: "10px" }}
                 >
                   <Link
-                    to={`/form/${form._id}`}
+                    to={`/form/view/${form._id}`}
                     style={{
                       color: "#fff",
                       backgroundColor: "#28a745",
                       padding: "8px 16px",
                       borderRadius: "5px",
                       textDecoration: "none",
-                      fontWeight: "bold",
                     }}
                   >
                     VIEW
@@ -112,33 +135,32 @@ const HomePage = () => {
                       padding: "8px 16px",
                       borderRadius: "5px",
                       textDecoration: "none",
-                      fontWeight: "bold",
                     }}
                   >
                     EDIT
                   </Link>
                   <button
-                    onClick={() => {
-                      // Implement delete functionality
-                    }}
+                    onClick={() => handleDelete(form._id)}
+                    disabled={deletingId === form._id} // Disable button while deleting
                     style={{
                       color: "#fff",
-                      backgroundColor: "#dc3545",
+                      backgroundColor:
+                        deletingId === form._id ? "#ccc" : "#dc3545",
                       padding: "8px 16px",
                       borderRadius: "5px",
                       border: "none",
-                      cursor: "pointer",
-                      fontWeight: "bold",
+                      cursor:
+                        deletingId === form._id ? "not-allowed" : "pointer",
                     }}
                   >
-                    DELETE
+                    {deletingId === form._id ? "DELETING..." : "DELETE"}
                   </button>
                 </div>
               </div>
             ))
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 };
