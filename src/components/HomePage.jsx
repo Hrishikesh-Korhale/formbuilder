@@ -4,22 +4,22 @@ import apiService from "../services/apiService";
 
 const HomePage = () => {
   const [forms, setForms] = useState([]);
-  const [deletingId, setDeletingId] = useState(null); 
-  const [loading, setLoading] = useState(false); 
+  const [deletingId, setDeletingId] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setLoading(true); 
+    setLoading(true);
     apiService
       .getForms()
       .then((data) => {
         setForms(data);
-        setLoading(false); 
+        setLoading(false);
       })
       .catch((err) => {
         setError(err.message);
-        setLoading(false); 
+        setLoading(false);
       });
   }, []);
 
@@ -68,9 +68,12 @@ const HomePage = () => {
       ) : (
         <div
           style={{
-            display: "flex",
-            flexWrap: "wrap",
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)", // 2 columns
+            gap: "30px",
             justifyContent: "center",
+            alignItems: "flex-start",
+            margin: "20px",
           }}
         >
           {forms.length === 0 ? (
@@ -94,12 +97,8 @@ const HomePage = () => {
                   border: "1px solid #ddd",
                   borderRadius: "10px",
                   padding: "20px",
-                  marginBottom: "15px",
-                  width: "calc(25% - 30px)", // 4 forms per row on large screens
-                  maxWidth: "300px",
                   backgroundColor: "#fff",
                   boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                  margin: "15px",
                 }}
               >
                 <h3
