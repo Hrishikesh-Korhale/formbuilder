@@ -4,9 +4,12 @@ import HomePage from "./components/HomePage";
 import { BrowserRouter } from "react-router-dom";
 import CreateNewForm from "./components/CreateNewForm";
 import ViewForm from "./components/viewform";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 const App = () => {
   return (
+    <DndProvider backend={HTML5Backend}>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -15,6 +18,7 @@ const App = () => {
         <Route path="/form/view/:id" element={<ViewForm />} />   
       </Routes>
     </BrowserRouter>
+    </DndProvider>
   );
 };
 

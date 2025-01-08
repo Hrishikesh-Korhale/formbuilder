@@ -195,9 +195,12 @@ const CreateNewForm = () => {
 };
 
 const Field = ({ index, field, moveField, handleDeleteField }) => {
-  const [, drag] = useDrag({
+  const [{ isDragging }, drag] = useDrag({
     type: "field",
     item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
   });
 
   const [, drop] = useDrop({
@@ -218,7 +221,10 @@ const Field = ({ index, field, moveField, handleDeleteField }) => {
         marginBottom: "10px",
         border: "1px solid #ddd",
         borderRadius: "5px",
-        backgroundColor: "white",
+        backgroundColor: isDragging ? "#e3e3e3" : "white",
+        opacity: isDragging ? 0.5 : 1,
+        transition: "all 0.2s ease",
+        cursor: "move",
       }}
     >
       <label style={{ display: "block", marginBottom: "5px" }}>{field.title}</label>
