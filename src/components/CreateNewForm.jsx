@@ -9,6 +9,7 @@ const CreateNewForm = () => {
   const [formTitle, setFormTitle] = useState("New Form");
   const [fields, setFields] = useState([]);
   const [newField, setNewField] = useState({ type: "text", title: "", placeholder: "" });
+  const [editingFieldIndex, setEditingFieldIndex] = useState(null);  // Track which field is being edited
 
   useEffect(() => {
     if (id) {
@@ -34,6 +35,19 @@ const CreateNewForm = () => {
 
   const handleDeleteField = (index) => {
     setFields(fields.filter((_, i) => i !== index));
+  };
+
+  const handleEditField = (index) => {
+    setEditingFieldIndex(index);
+    setNewField({ ...fields[index] });  // Pre-fill the field editor with the field's current details
+  };
+
+  const handleSaveField = () => {
+    const updatedFields = [...fields];
+    updatedFields[editingFieldIndex] = newField;
+    setFields(updatedFields);
+    setEditingFieldIndex(null);
+    setNewField({ type: "text", title: "", placeholder: "" } ) 
   };
 
   const handleSubmitForm = async () => {
@@ -114,6 +128,7 @@ const CreateNewForm = () => {
             field={field}
             moveField={moveField}
             handleDeleteField={handleDeleteField}
+            handleEditField={handleEditField}
           />
         ))}
       </div>
@@ -128,50 +143,101 @@ const CreateNewForm = () => {
         }}
       >
         <h3 style={{ marginBottom: "15px" }}>Field Editor</h3>
-        <div>
-          <label>Title</label>
-          <input
-            type="text"
-            value={newField.title}
-            onChange={(e) => setNewField({ ...newField, title: e.target.value })}
-            style={{
-              width: "100%",
-              padding: "8px",
-              margin: "10px 0",
-              border: "1px solid #ddd",
-              borderRadius: "5px",
-            }}
-          />
-        </div>
-        <div>
-          <label>Placeholder</label>
-          <input
-            type="text"
-            value={newField.placeholder}
-            onChange={(e) => setNewField({ ...newField, placeholder: e.target.value })}
-            style={{
-              width: "100%",
-              padding: "8px",
-              margin: "10px 0",
-              border: "1px solid #ddd",
-              borderRadius: "5px",
-            }}
-          />
-        </div>
-        <button
-          onClick={handleAddField}
-          style={{
-            width: "100%",
-            backgroundColor: "#007bff",
-            color: "white",
-            padding: "10px",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Add Field
-        </button>
+        {editingFieldIndex !== null ? (
+          <>
+            <div>
+              <label>Title</label>
+              <input
+                type="text"
+                value={newField.title}
+                onChange={(e) => setNewField({ ...newField, title: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  margin: "10px 0",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
+                }}
+              />
+            </div>
+            <div>
+              <label>Placeholder</label>
+              <input
+                type="text"
+                value={newField.placeholder}
+                onChange={(e) => setNewField({ ...newField, placeholder: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  margin: "10px 0",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
+                }}
+              />
+            </div>
+            <button
+              onClick={handleSaveField}
+              style={{
+                width: "100%",
+                backgroundColor: "#007bff",
+                color: "white",
+                padding: "10px",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
+              Save Changes
+            </button>
+          </>
+        ) : (
+          <>
+            <div>
+              <label>Title</label>
+              <input
+                type="text"
+                value={newField.title}
+                onChange={(e) => setNewField({ ...newField, title: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  margin: "10px 0",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
+                }}
+              />
+            </div>
+            <div>
+              <label>Placeholder</label>
+              <input
+                type="text"
+                value={newField.placeholder}
+                onChange={(e) => setNewField({ ...newField, placeholder: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  margin: "10px 0",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
+                }}
+              />
+            </div>
+            <button
+              onClick={handleAddField}
+              style={{
+                width: "100%",
+                backgroundColor: "#007bff",
+                color: "white",
+                padding: "10px",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
+              Add Field
+            </button>
+          </>
+        )}
       </div>
 
       {/* Submit Button */}
@@ -194,7 +260,7 @@ const CreateNewForm = () => {
   );
 };
 
-const Field = ({ index, field, moveField, handleDeleteField }) => {
+const Field = ({ index, field, moveField, handleDeleteField, handleEditField }) => {
   const [{ isDragging }, drag] = useDrag({
     type: "field",
     item: { index },
@@ -249,9 +315,25 @@ const Field = ({ index, field, moveField, handleDeleteField }) => {
           border: "none",
           borderRadius: "5px",
           cursor: "pointer",
+          margin: '2px'
         }}
       >
         Delete Field
+      </button>
+      <button
+        onClick={() => handleEditField(index)}
+        style={{
+          marginTop: "5px",
+          backgroundColor: "#007bff",
+          color: "white",
+          padding: "5px 10px",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+           margin: '2px'
+        }}
+      >
+        Edit Field
       </button>
     </div>
   );
