@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { useDrag, useDrop } from "react-dnd";
 import apiService from "../services/apiService";
 
 const CreateNewForm = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Extract form ID from URL
+  const { id } = useParams();
   const [formTitle, setFormTitle] = useState("New Form");
   const [fields, setFields] = useState([]);
   const [newField, setNewField] = useState({ type: "text", title: "", placeholder: "" });
 
   useEffect(() => {
-    // Fetch form data if editing
     if (id) {
       (async () => {
         try {
-          const formData = await apiService.getFormById(id); // Fetch form details
+          const formData = await apiService.getFormById(id);
           setFormTitle(formData.title);
           setFields(formData.inputs);
         } catch (error) {
@@ -50,11 +49,9 @@ const CreateNewForm = () => {
 
     try {
       if (id) {
-        // Update existing form
         await apiService.updateFormById(id, formData);
         alert("Form updated successfully!");
       } else {
-        // Create new form
         await apiService.createForm(formData);
         alert("Form created successfully!");
       }
@@ -65,17 +62,10 @@ const CreateNewForm = () => {
     }
   };
 
-  const onDragEnd = (result) => {
-    const { source, destination } = result;
-
-    // If dropped outside the list
-    if (!destination) return;
-
-    // Reorder the fields array
-    const reorderedFields = Array.from(fields);
-    const [removed] = reorderedFields.splice(source.index, 1);
-    reorderedFields.splice(destination.index, 0, removed);
-
+  const moveField = (draggedIndex, hoveredIndex) => {
+    const reorderedFields = [...fields];
+    const [draggedField] = reorderedFields.splice(draggedIndex, 1);
+    reorderedFields.splice(hoveredIndex, 0, draggedField);
     setFields(reorderedFields);
   };
 
@@ -106,75 +96,27 @@ const CreateNewForm = () => {
         </h2>
       </div>
 
-      {/* Form Preview with Drag-and-Drop */}
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="fields">
-          {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              style={{
-                padding: "20px",
-                border: "1px solid #ddd",
-                borderRadius: "5px",
-                backgroundColor: "#f9f9f9",
-                marginBottom: "20px",
-              }}
-            >
-              <h3 style={{ marginBottom: "15px" }}>Form Preview</h3>
-              {fields.map((field, index) => (
-                <Draggable key={index} draggableId={String(index)} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      style={{
-                        padding: "15px",
-                        marginBottom: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "5px",
-                        backgroundColor: "white",
-                        ...provided.draggableProps.style,
-                      }}
-                    >
-                      <label style={{ display: "block", marginBottom: "5px" }}>
-                        {field.title}
-                      </label>
-                      <input
-                        type={field.type}
-                        placeholder={field.placeholder}
-                        style={{
-                          width: "100%",
-                          padding: "8px",
-                          border: "1px solid #ddd",
-                          borderRadius: "5px",
-                        }}
-                        disabled
-                      />
-                      <button
-                        onClick={() => handleDeleteField(index)}
-                        style={{
-                          marginTop: "5px",
-                          backgroundColor: "#dc3545",
-                          color: "white",
-                          padding: "5px 10px",
-                          border: "none",
-                          borderRadius: "5px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Delete Field
-                      </button>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      {/* Form Preview with React DnD */}
+      <div
+        style={{
+          padding: "20px",
+          border: "1px solid #ddd",
+          borderRadius: "5px",
+          backgroundColor: "#f9f9f9",
+          marginBottom: "20px",
+        }}
+      >
+        <h3 style={{ marginBottom: "15px" }}>Form Preview</h3>
+        {fields.map((field, index) => (
+          <Field
+            key={index}
+            index={index}
+            field={field}
+            moveField={moveField}
+            handleDeleteField={handleDeleteField}
+          />
+        ))}
+      </div>
 
       {/* Field Editor */}
       <div
@@ -248,6 +190,63 @@ const CreateNewForm = () => {
           {id ? "Update Form" : "Create Form"}
         </button>
       </div>
+    </div>
+  );
+};
+
+const Field = ({ index, field, moveField, handleDeleteField }) => {
+  const [, drag] = useDrag({
+    type: "field",
+    item: { index },
+  });
+
+  const [, drop] = useDrop({
+    accept: "field",
+    hover: (item) => {
+      if (item.index !== index) {
+        moveField(item.index, index);
+        item.index = index;
+      }
+    },
+  });
+
+  return (
+    <div
+      ref={(node) => drag(drop(node))}
+      style={{
+        padding: "15px",
+        marginBottom: "10px",
+        border: "1px solid #ddd",
+        borderRadius: "5px",
+        backgroundColor: "white",
+      }}
+    >
+      <label style={{ display: "block", marginBottom: "5px" }}>{field.title}</label>
+      <input
+        type={field.type}
+        placeholder={field.placeholder}
+        style={{
+          width: "100%",
+          padding: "8px",
+          border: "1px solid #ddd",
+          borderRadius: "5px",
+        }}
+        disabled
+      />
+      <button
+        onClick={() => handleDeleteField(index)}
+        style={{
+          marginTop: "5px",
+          backgroundColor: "#dc3545",
+          color: "white",
+          padding: "5px 10px",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+      >
+        Delete Field
+      </button>
     </div>
   );
 };
